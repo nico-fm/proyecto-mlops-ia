@@ -1,0 +1,19 @@
+name: Pipeline MLOps CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+
+jobs:
+  probar-e-construir:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Descargar codigo del repositorio
+      uses: actions/checkout@v3
+
+    - name: Construir la imagen de Docker
+      run: docker build -t mi-api-ia .
+
+    - name: Probar ejecucion del contenedor
+      run: docker run -d -p 8000:8000 mi-api-ia
