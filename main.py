@@ -1,27 +1,30 @@
-from fastapi import FastAPI
-from transformers import pipeline
+import os
+import requests
+from fastapi import FastAPI, HTTPException
 
 app = FastAPI()
 
-# 1. CARGAMOS EL MODELO DE IA EN LA MEMORIA
-# pipeline() descarga automáticamente un modelo entrenado para analizar sentimientos.
-# (La primera vez que ejecutes esto, descargará unos 200MB de IA, luego será instantáneo)
-analizador_ia = pipeline("sentiment-analysis")
+# URL del motor de inferencia especializado de Hugging Face
+HF_API_URL = "https://api-inference.huggingface.co/models/distilbert/distilbert-base-uncased-finetuned-sst-2-english"
 
 @app.get("/")
-def estado_del_servidor():
-    return {"mensaje": "¡El servidor de MLOps está vivo y la IA está cargada!"}
+def home():
+    return {"mensaje": "API de Análisis de Sentimiento MLOps activa y en producción"}
 
-# 2. CREAMOS UN NUEVO ENDPOINT PARA USAR LA IA
-# Fíjate que en la URL ahora esperamos que el usuario nos mande un "texto"
 @app.get("/analizar")
 def analizar_texto(texto: str):
+    payload = {"inputs": texto}
     
-    # Le pasamos el texto del usuario a nuestro cerebro de IA
-    resultado = analizador_ia(texto)
+    # Hacemos la consulta al motor de inferencia externo
+    response = requests.post(HF_API_URL, json=payload)
     
-    # Devolvemos la respuesta de la IA a través de internet
+    if response.status_code != 200:
+        raise HTTPException(status_code=500, detail="Error en el motor de inferencia de IA")
+        
+    resultado = response.json()
+    
     return {
         "texto_ingresado": texto,
-        "prediccion_ia": resultado
+        "analisis": resultado,
+        "arquitectura": "Decoupled Microservice (FastAPI + HF Inference API)"
     }
